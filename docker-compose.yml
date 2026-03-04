@@ -1,3 +1,4 @@
+version: '3.9'
 services:
   postgres:
     image: postgres:15
@@ -9,6 +10,8 @@ services:
       POSTGRES_DB: airflow
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   airflow:
     image: apache/airflow:2.7.2
@@ -16,8 +19,14 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-    ports:
-      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
     volumes:
       - ./entrypoint.sh:/entrypoint.sh
+      - ./scripts:/opt/airflow/scripts
+      - ./dags:/opt/airflow/dags
     command: ["bash", "/entrypoint.sh"]
+
+volumes:
+  pgdata:
